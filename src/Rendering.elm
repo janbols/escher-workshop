@@ -9,87 +9,87 @@ import Mirror exposing (..)
 import Svg exposing (..)
 import Svg.Attributes exposing (..)
 
-f2s : Float -> String 
+f2s : Float -> String
 f2s = String.fromFloat
 
-i2s : Int -> String 
+i2s : Int -> String
 i2s = String.fromInt
 
 getStrokeWidthFromStyle : Maybe StrokeStyle -> Float
-getStrokeWidthFromStyle style = 
-  case style of 
+getStrokeWidthFromStyle style =
+  case style of
     Just { strokeWidth } -> sqrt strokeWidth
     Nothing -> 2.0
 
 toPolygonElement : Style -> List Vector -> Svg msg
-toPolygonElement style pts = 
-  let 
-    s = 
-      let 
+toPolygonElement style pts =
+  let
+    s =
+      let
         str {x, y} = (f2s x) ++ "," ++ (f2s y)
       in
         pts |> List.map str |> String.join " "
-    sw = getStrokeWidthFromStyle style.stroke  
+    sw = getStrokeWidthFromStyle style.stroke
   in
-    Svg.polygon 
+    Svg.polygon
       [ stroke "Black"
       , strokeWidth <| f2s sw
       , fill "None"
       , points s ] []
 
 toPolylineElement : Style -> List Vector -> Svg msg
-toPolylineElement style pts = 
-  let 
-    s = 
-      let 
+toPolylineElement style pts =
+  let
+    s =
+      let
         str {x, y} = (f2s x) ++ "," ++ (f2s y)
       in
         pts |> List.map str |> String.join " "
-    sw = getStrokeWidthFromStyle style.stroke  
+    sw = getStrokeWidthFromStyle style.stroke
   in
-    Svg.polyline 
+    Svg.polyline
       [ stroke "Black"
       , strokeWidth <| f2s sw
       , fill "None"
       , points s ] []
 
 toCurveElement : Style -> Vector -> Vector -> Vector -> Vector -> Svg msg
-toCurveElement style pt1 pt2 pt3 pt4 = 
-  let 
+toCurveElement style pt1 pt2 pt3 pt4 =
+  let
     toStr {x, y} = (f2s x) ++ " " ++ (f2s y)
     pt1s = toStr pt1
-    pt2s = toStr pt2 
-    pt3s = toStr pt3 
-    pt4s = toStr pt4 
+    pt2s = toStr pt2
+    pt3s = toStr pt3
+    pt4s = toStr pt4
     dval = "M" ++ pt1s ++ " C " ++ pt2s ++ ", " ++ pt3s ++ ", " ++ pt4s
-    sw = getStrokeWidthFromStyle style.stroke  
-  in 
-    Svg.path 
+    sw = getStrokeWidthFromStyle style.stroke
+  in
+    Svg.path
       [ stroke "Black"
       , strokeWidth <| f2s sw
       , fill "None"
       , d dval ] []
 
 toSvgElement : Style -> Shape -> Svg msg
-toSvgElement style shape = 
-  case shape of  
-    Polygon { points } -> toPolygonElement style points    
+toSvgElement style shape =
+  case shape of
+    Polygon { points } -> toPolygonElement style points
     Polyline { pts } -> toPolylineElement style pts
     Curve { point1, point2, point3, point4 } ->
-      toCurveElement style point1 point2 point3 point4 
+      toCurveElement style point1 point2 point3 point4
     x -> text "nothing"
 
 toBoxPolylineElement : List Vector -> Svg msg
-toBoxPolylineElement pts = 
-  let 
-    s = 
-      let 
+toBoxPolylineElement pts =
+  let
+    s =
+      let
         str {x, y} = (f2s x) ++ "," ++ (f2s y)
       in
         pts |> List.map str |> String.join " "
     sw = 1
   in
-    Svg.polyline 
+    Svg.polyline
       [ stroke "Grey"
       , strokeWidth <| f2s sw
       , strokeDasharray "2,2"
@@ -97,28 +97,28 @@ toBoxPolylineElement pts =
       , points s ] []
 
 toBoxLine : (Vector -> Vector) -> Vector -> Vector -> (String, String) -> Svg msg
-toBoxLine m v1 v2 (name, color) = 
-  let 
-    w1 = m v1 
-    w2 = m (add v1 v2) 
+toBoxLine m v1 v2 (name, color) =
+  let
+    w1 = m v1
+    w2 = m (add v1 v2)
   in
-    Svg.line 
+    Svg.line
       [ x1 <| f2s w1.x
-      , y1 <| f2s w1.y 
+      , y1 <| f2s w1.y
       , x2 <| f2s w2.x
       , y2 <| f2s w2.y
       , stroke color
       , strokeWidth "1.5"
       , markerEnd <| "url(#" ++ name ++ ")" ] []
 
-acolor : String 
-acolor = "#88499c"
+acolor : String
+acolor = "red"
 
-bcolor : String 
-bcolor = "#2381bf"
+bcolor : String
+bcolor = "orange"
 
-ccolor : String 
-ccolor = "#27b15b"
+ccolor : String
+ccolor = "purple"
 
 toBoxArrows : (Vector -> Vector) -> Box -> List (Svg msg)
 toBoxArrows m { a, b, c } =
@@ -127,36 +127,36 @@ toBoxArrows m { a, b, c } =
   , toBoxLine m a c ("c-arrow", ccolor) ]
 
 toBoxShape : (Vector -> Vector) -> Box -> List Vector
-toBoxShape m { a, b, c } = 
+toBoxShape m { a, b, c } =
   let
     b2 = add a b
-    c2 = add a c 
+    c2 = add a c
     d = add a (add b c)
     pts = [m a, m b2, m d, m c2, m a]
   in
     pts
 
 toBoxArrowLines : (Vector -> Vector) -> Box -> List Vector
-toBoxArrowLines m { a, b, c } = 
+toBoxArrowLines m { a, b, c } =
   let
     b2 = add a b
-    c2 = add a c 
+    c2 = add a c
     d = add a (add b c)
     pts = [m a, m b2, m d, m c2, m a]
   in
     pts
 
-createAxisList : Int -> Int -> List Int 
-createAxisList interval n = 
+createAxisList : Int -> Int -> List Int
+createAxisList interval n =
   if n < 0 then []
-  else 
+  else
     let next = n - interval
-    in 
+    in
       n :: createAxisList interval next
 
 createXAxisElement : Int -> Int -> Svg msg
-createXAxisElement y x = 
-  Svg.line 
+createXAxisElement y x =
+  Svg.line
     [ x1 <| i2s x
     , y1 <| i2s y
     , x2 <| i2s x
@@ -164,16 +164,16 @@ createXAxisElement y x =
     , stroke "black"
     , strokeWidth "1.0" ] []
 
-createXAxis : Int -> Int -> List (Svg msg) 
-createXAxis xmax ypos = 
-  let 
+createXAxis : Int -> Int -> List (Svg msg)
+createXAxis xmax ypos =
+  let
     axisList = createAxisList 20 xmax
-  in 
+  in
     axisList |> List.map (\x -> xmax - x) |> List.map (createXAxisElement ypos)
 
 createYAxisElement : Int -> Int -> Svg msg
-createYAxisElement x y = 
-  Svg.line 
+createYAxisElement x y =
+  Svg.line
     [ x1 <| i2s x
     , y1 <| i2s y
     , x2 <| i2s (x + 3)
@@ -181,54 +181,54 @@ createYAxisElement x y =
     , stroke "black"
     , strokeWidth "1.0" ] []
 
-createYAxis : Int -> Int -> List (Svg msg) 
-createYAxis xpos ymax = 
-  let 
+createYAxis : Int -> Int -> List (Svg msg)
+createYAxis xpos ymax =
+  let
     axisList = createAxisList 20 ymax
-  in 
+  in
     axisList |> List.map (createYAxisElement xpos)
 
 createMarker : (String, String) -> Svg msg
-createMarker (markerId, color) = 
-  Svg.marker 
+createMarker (markerId, color) =
+  Svg.marker
     [ id markerId
     , markerWidth "10"
     , markerHeight "10"
     , refX "9"
     , refY "3"
     , orient "auto"
-    , markerUnits "strokeWidth" ] 
-    [ Svg.path 
+    , markerUnits "strokeWidth" ]
+    [ Svg.path
       [ d "M0,0 L0,6 L9,3 z"
       , fill color ] [] ]
 
 createAxes : Int -> Int -> List (Svg msg)
-createAxes w h = 
-  let 
+createAxes w h =
+  let
     xx = i2s 0
     yy = i2s h
     axisColor = "black"
-    xAxis =     
-      Svg.line 
+    xAxis =
+      Svg.line
         [ x1 <| i2s 0
         , y1 yy
         , x2 <| i2s w
         , y2 yy
         , stroke axisColor
         , strokeWidth "1.5" ] []
-    yAxis =  
-      Svg.line 
+    yAxis =
+      Svg.line
         [ x1 xx
         , y1 <| i2s 0
         , x2 xx
         , y2 <| i2s w
         , stroke axisColor
         , strokeWidth "1.5" ] []
-  in 
+  in
     [ xAxis, yAxis ] ++ createXAxis w h ++ createYAxis 0 h
 
-toSvgWithBoxes : (Int, Int) -> List Box -> Rendering -> Svg msg 
-toSvgWithBoxes bounds boxes rendering = 
+toSvgWithBoxes : (Int, Int) -> List Box -> Rendering -> Svg msg
+toSvgWithBoxes bounds boxes rendering =
   let
     (w, h) = bounds
     viewBoxValue = ["0", "0", i2s w, i2s h] |> String.join " "
@@ -243,8 +243,8 @@ toSvgWithBoxes bounds boxes rendering =
       , ("b-arrow", bcolor)
       , ("c-arrow", ccolor) ]
     defs = markers |> List.map createMarker |> Svg.defs []
-    svgElements = 
-      case boxes of 
+    svgElements =
+      case boxes of
       [] -> things
       _ -> ([defs] ++ things ++ boxShapes ++ boxArrows ++ axes)
   in
@@ -256,6 +256,6 @@ toSvgWithBoxes bounds boxes rendering =
       , height (i2s h) ]
       svgElements
 
-toSvg : (Int, Int) -> Rendering -> Svg msg 
-toSvg bounds rendering = 
-  toSvgWithBoxes bounds [] rendering 
+toSvg : (Int, Int) -> Rendering -> Svg msg
+toSvg bounds rendering =
+  toSvgWithBoxes bounds [] rendering
